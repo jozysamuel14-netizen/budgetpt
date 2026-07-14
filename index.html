@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BudgetPT — Orçamento Mensal</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0908">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BudgetPT">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
@@ -77,10 +83,11 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
 .tx-pill{font-family:var(--mono);font-size:9px;color:var(--t3);background:var(--lift);border:1px solid var(--b1);border-radius:2px;padding:3px 7px}
 .tx-pill b{font-weight:600}
 
-/* categorias na sidebar */
+/* categorias e recorrentes na sidebar */
 .ei{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--b1)}
 .ei:last-child{border-bottom:none}
 .ei-name{flex:1;font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ei-note{font-family:var(--mono);font-size:9px;color:var(--t4);margin-top:1px}
 .ei-amt{width:68px;background:var(--lift);border:1px solid var(--b1);border-radius:2px;padding:5px 7px;color:var(--t1);font-family:var(--mono);font-size:11px;text-align:right;outline:none;transition:border-color .15s}
 .ei-amt:focus{border-color:var(--grn2)}
 .ei-del{background:none;border:none;color:var(--t5);cursor:pointer;font-size:11px;padding:1px 3px;transition:color .15s;flex-shrink:0}
@@ -178,6 +185,11 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
 .rbtn.del:hover{color:var(--red2)}
 .empty{padding:26px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--t4)}
 .week-sep td{background:var(--raise)!important;font-family:var(--serif)!important;font-size:10px!important;font-style:italic;color:var(--grn2)!important;padding:6px 10px!important}
+
+/* registo rápido */
+.qa-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.qa-chip{background:var(--lift);border:1px solid var(--b1);border-radius:2px;padding:6px 10px;color:var(--t2);font-family:var(--mono);font-size:10px;cursor:pointer;transition:border-color .15s,color .15s;white-space:nowrap}
+.qa-chip:hover{border-color:var(--grn);color:var(--grn2)}
 
 /* ── DÍVIDAS ── */
 .db-form{grid-template-columns:1fr 160px auto}
@@ -317,9 +329,9 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
     </button>
     <div class="sbs-body">
       <div class="fl">
-        <label class="fl-l">Dízimo (% do bruto)</label>
+        <label class="fl-l">Dízimo (% do bruto + subs. alimentação)</label>
         <div class="sl-wrap">
-          <input type="range" min="0" max="15" step="1" id="tithePct">
+          <input type="range" min="0" max="20" step="1" id="tithePct">
           <span class="sl-v" id="tithePctLbl">10%</span>
         </div>
         <div class="fi-hint">0% desativa a linha de dízimo</div>
@@ -346,6 +358,28 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
         <input class="add-i" type="number" id="catNewBudget" placeholder="€" min="0" style="max-width:54px">
         <button class="add-b" id="catAddBtn">+</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Recorrentes -->
+  <div class="sbs" id="sec-rec">
+    <button class="sbs-btn" data-tog="sec-rec">
+      <div class="sbs-left"><span class="sbs-ico">🔁</span><span class="sbs-lbl">Movimentos Recorrentes</span></div>
+      <span class="sbs-arr">▶</span>
+    </button>
+    <div class="sbs-body">
+      <div class="fi-hint" style="margin:0 0 7px">Lançados automaticamente a cada mês, a começar no <b>próximo</b>. Este mês, regista à mão se ainda não o fizeste.</div>
+      <div id="recList"></div>
+      <div class="add-r"><input class="add-i" type="text" id="recDesc" placeholder="Descrição (ex.: Renda)" maxlength="60"></div>
+      <div class="add-r">
+        <input class="add-i" type="number" id="recAmt" placeholder="€" min="0.01" step="0.01">
+        <input class="add-i" type="number" id="recDay" placeholder="dia (1–28)" min="1" max="28" style="max-width:80px">
+      </div>
+      <div class="add-r">
+        <select class="fi" id="recType" style="flex:0 0 40%;font-size:10px;padding:6px 8px"><option value="despesa">Despesa</option><option value="receita">Receita</option></select>
+        <select class="fi" id="recCat" style="flex:1;font-size:10px;padding:6px 8px"></select>
+      </div>
+      <div class="add-r"><button class="add-b" id="recAddBtn" style="flex:1">+ Adicionar recorrente</button></div>
     </div>
   </div>
 
@@ -400,7 +434,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
   <nav class="pnav">
     <button class="pnt on" data-view="overview">Visão Geral</button>
     <button class="pnt" data-view="moves">Movimentos</button>
-    <button class="pnt" data-view="debts">Dívidas</button>
+    <button class="pnt" data-view="debts">Dívidas &amp; Fundo</button>
     <button class="pnt" data-view="analysis">Análise</button>
     <button class="pnt" data-view="tips">Guia PT</button>
   </nav>
@@ -412,7 +446,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
         <div class="fc"><div class="fc-l"><div class="d" style="background:var(--t4)"></div>Bruto Mensal</div><div class="fc-v" style="color:var(--t2)" id="fcGross">€ 0</div><div class="fc-s" id="fcGrossS">média 12 meses c/ subsídios</div></div>
         <div class="fc"><div class="fc-l"><div class="d" style="background:var(--red)"></div>IRS + Seg. Social</div><div class="fc-v" style="color:var(--red2)" id="fcTax">€ 0</div><div class="fc-s">retenções mensais estimadas</div></div>
         <div class="fc hl"><div class="fc-l"><div class="d" style="background:var(--grn2)"></div>Líquido</div><div class="fc-v" style="color:var(--grn3)" id="fcNet">€ 0</div><div class="fc-s">+ subsídio alimentação</div></div>
-        <div class="fc"><div class="fc-l"><div class="d" style="background:var(--gold)"></div>Dízimo</div><div class="fc-v" style="color:var(--gold2)" id="fcTithe">€ 0</div><div class="fc-s" id="fcTitheS">10% do bruto</div></div>
+        <div class="fc"><div class="fc-l"><div class="d" style="background:var(--gold)"></div>Dízimo</div><div class="fc-v" style="color:var(--gold2)" id="fcTithe">€ 0</div><div class="fc-s" id="fcTitheS">10% do bruto + alimentação</div></div>
         <div class="fc hl"><div class="fc-l"><div class="d" style="background:var(--blu2)"></div>Disponível</div><div class="fc-v" style="color:var(--blu2)" id="fcAvail">€ 0</div><div class="fc-s">após dízimo, para o mês</div></div>
       </div>
       <div class="ov-grid">
@@ -425,6 +459,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
             <div class="card-t">Meta de Poupança <span id="goalPct" style="font-size:11px;color:var(--t2)">—</span></div>
             <div class="cb-tr"><div class="cb-bar" id="goalBar" style="width:0%;background:var(--grn)"></div></div>
             <div class="hc-msg g" id="goalMsg">Define a meta na barra lateral</div>
+            <div class="fi-hint" id="ovFund" style="margin-top:7px;text-align:center;display:none"></div>
           </div>
         </div>
         <div>
@@ -432,7 +467,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
             <div class="card-t">Orçamento vs. Real <span id="cbMonth" style="font-size:10px;color:var(--t3)"></span></div>
             <div id="cbList"></div>
           </div>
-          <div class="tithe-ln" id="titheNote">✝ O dízimo é calculado sobre o <strong>rendimento bruto total</strong> — incluindo subsídios — antes de impostos.</div>
+          <div class="tithe-ln" id="titheNote">✝ O dízimo é calculado sobre o <strong>bruto total + subsídio de alimentação</strong> — incluindo subsídios de férias e Natal — antes de impostos.</div>
         </div>
       </div>
     </div>
@@ -440,6 +475,7 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
     <!-- MOVIMENTOS -->
     <div class="view" id="view-moves">
       <div class="ph"><span class="ph-t">Movimentos</span><div class="ph-r"></div><span class="ph-m" id="mvCount">0 registos</span></div>
+      <div class="qa-row" id="qaRow" style="display:none"></div>
       <form class="mv-form" id="mvForm">
         <div class="fl"><label class="fl-l">Data</label><input class="fi" type="date" id="mvDate" required></div>
         <div class="fl"><label class="fl-l">Descrição</label><input class="fi" type="text" id="mvDesc" placeholder="Continente, renda…" maxlength="60" required></div>
@@ -474,6 +510,23 @@ select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='
         <div class="mv-actions"><button class="btn" type="submit">+ Adicionar dívida</button></div>
       </form>
       <div id="dbList"></div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-t">Fundo de Poupança — Acumulado <span id="fundTotal" style="font-size:14px;color:var(--grn2)">€ 0</span></div>
+        <div class="fl" style="max-width:280px">
+          <label class="fl-l">Objetivo do fundo (€)</label>
+          <input class="fi" type="number" id="fundGoal" min="0" step="50" placeholder="ex.: 3× as tuas despesas mensais">
+        </div>
+        <div class="cb-tr" style="margin:10px 0 8px"><div class="cb-bar" id="fundBar" style="width:0%;background:var(--grn)"></div></div>
+        <div class="hc-msg g" id="fundMsg">Regista o primeiro depósito para começar a acumular.</div>
+        <div class="db-pay">
+          <input class="fi" type="date" id="fundDate">
+          <input class="fi" type="number" id="fundAmt" min="0.01" step="0.01" placeholder="valor €">
+          <select class="fi" id="fundType" style="max-width:150px"><option value="in">Depósito</option><option value="out">Levantamento</option></select>
+          <button class="btn" type="button" id="fundAddBtn">+ Registar</button>
+        </div>
+        <div class="tsc" style="margin-top:9px" id="fundHistWrap"><table class="dt" style="min-width:0"><tbody id="fundHist"></tbody></table></div>
+      </div>
     </div>
 
     <!-- ANÁLISE -->
@@ -557,7 +610,9 @@ function defaultState() {
       { id: uid(), name: 'Diversos', budget: 50 }
     ],
     transactions: [], // {id, date:'AAAA-MM-DD', desc, categoryId, type:'despesa'|'receita', amount}
-    debts: []         // {id, name, initial, payments:[{id, date, amount}]}
+    debts: [],        // {id, name, initial, payments:[{id, date, amount}]}
+    recurring: [],    // {id, desc, categoryId, type, amount, day, lastApplied:'AAAA-MM'}
+    savingsFund: { goal: 0, entries: [] } // entries: {id, date, amount} (negativo = levantamento)
   };
 }
 
@@ -647,7 +702,8 @@ function calcIncome() {
   const { irs, ss, eff } = ptTax(sal);
   const meal = num(state.income.mealDay) * 22;
   const net = grossAvg - irs - ss + meal + num(state.income.otherIncome);
-  const tithe = grossAvg * (num(state.tithePct) / 100);
+  // dízimo sobre bruto + subsídio de alimentação (antes de impostos)
+  const tithe = (grossAvg + meal) * (num(state.tithePct) / 100);
   return { sal, grossAvg, irs, ss, eff, meal, net, tithe, avail: net - tithe };
 }
 
@@ -669,7 +725,10 @@ function renderAll() {
   renderCatSelects();
   renderOverview();
   renderMoves();
+  renderQuickAdd();
+  renderRecurring();
   renderDebts();
+  renderFund();
   renderAnalysis();
 }
 
@@ -704,6 +763,9 @@ function renderCatSelects() {
   fltCat.innerHTML = '<option value="">Todas as categorias</option>' + opts;
   if (!state.categories.some(c => c.id === prevFlt)) ui.fltCat = '';
   fltCat.value = ui.fltCat;
+  const recCat = $('recCat'), prevRec = recCat.value;
+  recCat.innerHTML = opts;
+  if (state.categories.some(c => c.id === prevRec)) recCat.value = prevRec;
 }
 
 /* ── Visão Geral ── */
@@ -716,7 +778,7 @@ function renderOverview() {
   $('fcTax').textContent = fm(inc.irs + inc.ss);
   $('fcNet').textContent = fm(inc.net);
   $('fcTithe').textContent = fm(inc.tithe);
-  $('fcTitheS').textContent = state.tithePct + '% do bruto';
+  $('fcTitheS').textContent = state.tithePct + '% do bruto + alimentação';
   $('fcAvail').textContent = fm(inc.avail);
   $('titheNote').style.display = state.tithePct > 0 ? 'block' : 'none';
 
@@ -760,6 +822,14 @@ function renderOverview() {
   else if (gp >= 100) { gm.textContent = `Meta atingida ✓ — sobra de ${fm(saved)}`; gm.className = 'hc-msg g'; }
   else { gm.textContent = `Faltam ${fm(goal - saved)} para a meta deste mês`; gm.className = 'hc-msg w'; }
 
+  // fundo acumulado (resumo)
+  const ft = fundTotal(), fg = num(state.savingsFund.goal);
+  const ov = $('ovFund');
+  if (ft || fg) {
+    ov.style.display = 'block';
+    ov.textContent = `Fundo de poupança: ${fm(ft)}` + (fg > 0 ? ` de ${fm(fg)} (${Math.round(Math.min(100, ft / fg * 100))}%)` : '');
+  } else ov.style.display = 'none';
+
   drawDonut();
 }
 
@@ -788,13 +858,88 @@ function renderMoves() {
     const dLbl = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
     html += `<tr data-editing="${t.id === ui.editingId}">
       <td>${dLbl}</td>
-      <td style="color:var(--t2)">${esc(t.desc)}</td>
+      <td style="color:var(--t2)">${t.recId ? '🔁 ' : ''}${esc(t.desc)}</td>
       <td>${esc(catName(t.categoryId))}</td>
       <td class="r ${t.type === 'receita' ? 'amt-in' : 'amt-out'}">${t.type === 'receita' ? '+' : '−'} ${fm(t.amount)}</td>
       <td class="r"><button class="rbtn" data-edit="${t.id}" title="Editar">✎</button><button class="rbtn del" data-del="${t.id}" title="Apagar">✕</button></td>
     </tr>`;
   });
   body.innerHTML = html;
+}
+
+/* ── Recorrentes ── */
+function applyRecurring() {
+  const nowYm = new Date().toISOString().slice(0, 7);
+  let changed = false;
+  state.recurring.forEach(r => {
+    let ym = shiftMonth(r.lastApplied || nowYm, 1);
+    while (ym <= nowYm) {
+      state.transactions.push({
+        id: uid(), createdAt: Date.now(), recId: r.id,
+        date: ym + '-' + String(Math.min(28, Math.max(1, r.day))).padStart(2, '0'),
+        desc: r.desc, categoryId: r.categoryId, type: r.type, amount: r.amount
+      });
+      r.lastApplied = ym;
+      changed = true;
+      ym = shiftMonth(ym, 1);
+    }
+  });
+  return changed;
+}
+
+function renderRecurring() {
+  $('recList').innerHTML = state.recurring.map(r => `
+    <div class="ei">
+      <div style="flex:1;min-width:0">
+        <div class="ei-name">🔁 ${esc(r.desc)}</div>
+        <div class="ei-note">${fm(r.amount)} · dia ${r.day} · ${esc(catName(r.categoryId))}${r.type === 'receita' ? ' · receita' : ''}</div>
+      </div>
+      <button class="ei-del" data-delrec="${r.id}" title="Apagar recorrente">✕</button>
+    </div>`).join('') || '<div class="fi-hint">Nenhum recorrente definido.</div>';
+}
+
+/* ── Registo rápido (despesas mais frequentes dos últimos 90 dias) ── */
+function renderQuickAdd() {
+  const cutoff = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  const freq = {};
+  state.transactions.forEach(t => {
+    if (t.type !== 'despesa' || t.date < cutoff || t.recId) return;
+    const k = t.desc.toLowerCase();
+    if (!freq[k]) freq[k] = { n: 0, t };
+    freq[k].n++;
+    if (t.date > freq[k].t.date) freq[k].t = t; // usa o valor mais recente
+  });
+  const top = Object.values(freq).filter(x => x.n >= 2).sort((a, b) => b.n - a.n).slice(0, 4);
+  const row = $('qaRow');
+  if (!top.length) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  row.innerHTML = top.map(x => `<button class="qa-chip" type="button" data-qa="${x.t.id}" title="Preencher o formulário com este gasto">⚡ ${esc(x.t.desc)} · ${fm(x.t.amount)}</button>`).join('');
+}
+
+/* ── Fundo de Poupança ── */
+function fundTotal() { return state.savingsFund.entries.reduce((s, e) => s + e.amount, 0); }
+
+function renderFund() {
+  const tot = fundTotal();
+  const goal = num(state.savingsFund.goal);
+  $('fundTotal').textContent = fm(tot);
+  if (document.activeElement !== $('fundGoal')) $('fundGoal').value = state.savingsFund.goal || '';
+  if (!$('fundDate').value) $('fundDate').value = new Date().toISOString().slice(0, 10);
+  const pct = goal > 0 ? Math.min(100, Math.max(0, tot / goal * 100)) : 0;
+  $('fundBar').style.width = pct + '%';
+  $('fundBar').style.background = pct >= 100 ? 'var(--grn2)' : 'var(--grn)';
+  const monthlyExp = state.categories.reduce((s, c) => s + c.budget, 0);
+  const months = monthlyExp > 0 ? (tot / monthlyExp) : 0;
+  const fmsg = $('fundMsg');
+  if (!state.savingsFund.entries.length) { fmsg.textContent = 'Regista o primeiro depósito para começar a acumular.'; fmsg.className = 'hc-msg g'; }
+  else if (goal > 0 && tot >= goal) { fmsg.textContent = `Objetivo atingido ✓ — ${fm(tot)}` + (months ? ` (~${months.toFixed(1)} meses de despesas)` : ''); fmsg.className = 'hc-msg g'; }
+  else { fmsg.textContent = (goal > 0 ? `${Math.round(pct)}% do objetivo — faltam ${fm(goal - tot)}` : `Tens ${fm(tot)} acumulados`) + (months ? ` · ~${months.toFixed(1)} meses de despesas` : ''); fmsg.className = 'hc-msg ' + (months >= 3 ? 'g' : 'w'); }
+  const hist = state.savingsFund.entries.slice().sort((a, b) => b.date.localeCompare(a.date)).map(e => {
+    const dl = new Date(e.date + 'T00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' });
+    return `<tr><td>${dl}</td><td>${e.amount >= 0 ? 'depósito' : 'levantamento'}</td><td class="r ${e.amount >= 0 ? 'amt-in' : 'amt-out'}">${e.amount >= 0 ? '+' : '−'} ${fm(Math.abs(e.amount))}</td><td class="r" style="width:40px"><button class="rbtn del" data-delfund="${e.id}" title="Apagar registo">✕</button></td></tr>`;
+  }).join('');
+  $('fundHistWrap').style.display = hist ? 'block' : 'none';
+  $('fundHist').innerHTML = hist;
 }
 
 /* ── Dívidas ── */
@@ -1078,13 +1223,14 @@ function setSyncStatus(msg) { const el = $('syncStatus'); if (el) el.textContent
 
 function adoptRemote(remote) {
   state = Object.assign(defaultState(), remote);
-  Store.save(state);
+  // lança recorrentes pendentes também no estado vindo da folha
+  if (applyRecurring()) persist(); else Store.save(state);
   syncSidebarInputs();
   renderAll();
 }
 
 /* no arranque: usa a versão mais recente (folha vs. local) */
-async function initialSync() {
+async function initialSync(forcePush) {
   if (!Sync.enabled()) return;
   setSyncStatus('a verificar a folha…');
   try {
@@ -1094,7 +1240,7 @@ async function initialSync() {
     if (remote && remoteAt > localAt) {
       adoptRemote(remote);
       setSyncStatus('✓ carregado da folha às ' + hora());
-    } else if (localAt > remoteAt) {
+    } else if (localAt > remoteAt || forcePush) {
       Sync.push();
     } else {
       setSyncStatus('✓ em dia com a folha');
@@ -1210,6 +1356,72 @@ function bindEvents() {
       $('mvCancel').style.display = 'inline-block';
       $('mvDesc').focus();
     }
+  });
+
+  // recorrentes
+  $('recAddBtn').addEventListener('click', () => {
+    const desc = $('recDesc').value.trim();
+    const amount = num($('recAmt').value);
+    const day = Math.min(28, Math.max(1, parseInt($('recDay').value) || 1));
+    if (!desc || amount <= 0) { toast('⚠ Preenche descrição e valor'); return; }
+    state.recurring.push({
+      id: uid(), desc, amount, day,
+      categoryId: $('recCat').value, type: $('recType').value,
+      lastApplied: new Date().toISOString().slice(0, 7) // começa no próximo mês
+    });
+    $('recDesc').value = ''; $('recAmt').value = ''; $('recDay').value = '';
+    persist(); renderRecurring();
+    toast(`Recorrente criado — 1.º lançamento em ${monthLabel(shiftMonth(new Date().toISOString().slice(0, 7), 1))} ✓`);
+  });
+  $('recList').addEventListener('click', e => {
+    const id = e.target.dataset.delrec;
+    if (!id) return;
+    const r = state.recurring.find(x => x.id === id);
+    if (!r || !confirm(`Apagar o recorrente "${r.desc}"? Os movimentos já lançados mantêm-se.`)) return;
+    state.recurring = state.recurring.filter(x => x.id !== id);
+    persist(); renderRecurring();
+  });
+
+  // registo rápido
+  $('qaRow').addEventListener('click', e => {
+    const id = e.target.dataset.qa;
+    if (!id) return;
+    const t = state.transactions.find(x => x.id === id);
+    if (!t) return;
+    ui.editingId = null;
+    $('mvDate').value = todayInMonth();
+    $('mvDesc').value = t.desc;
+    $('mvCat').value = t.categoryId;
+    $('mvType').value = t.type;
+    $('mvAmt').value = t.amount;
+    $('mvSubmit').textContent = '+ Adicionar';
+    $('mvCancel').style.display = 'none';
+    $('mvAmt').focus(); $('mvAmt').select();
+  });
+
+  // fundo de poupança
+  $('fundGoal').addEventListener('input', e => {
+    state.savingsFund.goal = num(e.target.value);
+    persist(); renderFund(); renderOverview();
+  });
+  $('fundAddBtn').addEventListener('click', () => {
+    const date = $('fundDate').value || new Date().toISOString().slice(0, 10);
+    let amount = num($('fundAmt').value);
+    if (amount <= 0) { toast('⚠ Indica o valor'); return; }
+    if ($('fundType').value === 'out') {
+      if (amount > fundTotal() && !confirm(`O levantamento (${fm(amount)}) é superior ao fundo (${fm(fundTotal())}). Registar na mesma?`)) return;
+      amount = -amount;
+    }
+    state.savingsFund.entries.push({ id: uid(), date, amount });
+    $('fundAmt').value = '';
+    persist(); renderFund(); renderOverview();
+    toast(amount >= 0 ? 'Depósito registado ✓' : 'Levantamento registado ✓');
+  });
+  $('fundHist').addEventListener('click', e => {
+    const id = e.target.dataset.delfund;
+    if (!id || !confirm('Apagar este registo do fundo?')) return;
+    state.savingsFund.entries = state.savingsFund.entries.filter(x => x.id !== id);
+    persist(); renderFund(); renderOverview();
   });
 
   // dívidas
@@ -1357,8 +1569,14 @@ $('syncUrl').value = Sync.cfg.url;
 $('syncToken').value = Sync.cfg.token;
 if (Sync.enabled()) $('sec-sync').classList.add('open');
 resetMvForm();
+const recChanged = applyRecurring(); // lança recorrentes pendentes (sem mexer no updatedAt)
 renderAll();
-Store.save(state);   // guarda localmente sem disparar push no arranque
-initialSync();       // depois decide quem está mais atualizado (folha vs. local)
+Store.save(state);        // guarda localmente sem disparar push no arranque
+initialSync(recChanged);  // decide quem está mais atualizado (folha vs. local)
+
+/* PWA: modo offline quando servida por https (GitHub Pages) */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body></html>
